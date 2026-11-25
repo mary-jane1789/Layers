@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF9F2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="GTD">
+<meta name="robots" content="noindex">
+<title>GTD</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-180.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@200;300;500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --oliv:#75592A; --gelb:#E3E867; --gelb-hell:#F3F4CF; --blau:#4BB1F5; --blau-hell:#DCEFFC; --beige:#EFE8DA;
+  --grund:#FAF9F2; --tinte:#141414; --grau:#3d3d3d; --linie:rgba(20,20,20,.12); --rot:#9A2A1A;
+  --display:'Inter Tight',system-ui,sans-serif; --text:Inter,system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--grund);color:var(--tinte);font-family:var(--text);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+header{padding:calc(env(safe-area-inset-top) + 18px) 20px 14px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+h1{margin:0;font:200 46px/.9 var(--display);letter-spacing:-.02em;text-transform:uppercase}
+.unterzeile{margin:8px 0 0;font:300 15px/1.2 var(--display);text-transform:uppercase;color:var(--oliv)}
+.neu-laden{border:1px solid var(--linie);background:#fff;border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex:none}
+main{padding:6px 16px calc(env(safe-area-inset-bottom) + 96px)}
+h2{margin:0;font:300 22px/1 var(--display);text-transform:uppercase}
+.karte{background:#fff;border:1px solid var(--linie);border-radius:18px;padding:16px 16px 8px;margin-bottom:14px}
+.kopf{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.pille{display:inline-block;padding:5px 10px;border-radius:999px;font:500 11px/1 var(--mono);white-space:nowrap}
+.eintrag{display:flex;gap:4px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--linie)}
+.eintrag .t{font-size:16px;line-height:1.35}
+.inhalt{min-width:0;flex:1;border:0;background:transparent;text-align:left;padding:0;cursor:pointer}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:3px;font:400 11px/1.4 var(--mono);color:var(--grau)}
+.rot{color:var(--rot)}
+.erl{text-decoration:line-through;color:#555}
+.haken{flex:none;width:44px;height:44px;margin:-10px 0 -10px -10px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.haken span{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--tinte);display:flex;align-items:center;justify-content:center}
+.haken svg path{stroke:transparent}
+.haken.an span{background:var(--tinte)}
+.haken.an svg path{stroke:var(--gelb)}
+.leer{color:var(--grau);font-size:14px;padding:10px 0;margin:0;border-top:1px solid var(--linie)}
+.mehr{border:0;background:transparent;padding:12px 0 8px;font:400 12px/1 var(--mono);color:var(--grau)}
+/* Erfassen */
+.erfassen{background:#fff;border:1px solid var(--linie);border-radius:22px;padding:12px;margin-bottom:18px}
+.erfassen textarea{width:100%;border:0;resize:none;font-size:18px;line-height:1.35;padding:6px 6px 10px;background:transparent;min-height:56px}
+.erfassen textarea:focus{outline:none}
+.optionen{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{border:1px solid var(--linie);background:transparent;border-radius:999px;padding:8px 12px;font:500 12px/1 var(--mono);display:inline-flex;align-items:center;gap:6px;position:relative}
+.chip.an{background:var(--gelb-hell);border-color:var(--tinte)}
+.chip input,.chip select{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.senden{margin-left:auto;border:0;border-radius:999px;background:var(--oliv);color:var(--gelb);padding:11px 20px;font:500 15px/1 var(--text)}
+.senden:disabled{opacity:.45}
+.warte{font:400 11px/1.4 var(--mono);color:var(--oliv);margin:-8px 4px 14px}
+/* Tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(250,249,242,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--linie);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 8px calc(env(safe-area-inset-bottom) + 6px);z-index:5}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;text-decoration:none;color:var(--grau);font:500 11px/1 var(--text)}
+nav.tabs a i{width:30px;height:4px;border-radius:2px;background:transparent}
+nav.tabs a[aria-current=page]{color:var(--tinte)}
+nav.tabs a[aria-current=page] i{background:var(--oliv)}
+nav.tabs svg{width:24px;height:24px}
+/* Sheet */
+.schleier{position:fixed;inset:0;background:rgba(20,20,20,.28);z-index:8}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--grund);border-radius:22px 22px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 18px);z-index:9;max-height:88vh;overflow:auto}
+.sheet label{display:block;font:500 11px/1 var(--mono);text-transform:uppercase;color:var(--grau);margin:14px 0 6px}
+.sheet textarea,.sheet input[type=text],.sheet input[type=date],.sheet select{width:100%;border:1px solid var(--linie);background:#fff;border-radius:12px;padding:12px;font-size:16px}
+.sheet textarea{resize:none;min-height:80px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;border:1px solid var(--linie);background:#fff;border-radius:999px;padding:10px 0;font:500 13px/1 var(--mono)}
+.seg button[aria-pressed=true]{background:var(--gelb);border-color:var(--tinte)}
+.knoepfe{display:flex;gap:8px;margin-top:20px}
+.knopf{flex:1;border:0;border-radius:999px;background:var(--oliv);color:var(--gelb);padding:14px;font:500 15px/1 var(--text)}
+.knopf.hell{background:transparent;border:1px solid rgba(20,20,20,.25);color:var(--tinte)}
+.knopf.rot{background:transparent;border:1px solid var(--rot);color:var(--rot)}
+.gruppe-kopf{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:4px 0 8px;text-align:left}
+.punkt{width:9px;height:9px;border-radius:50%;background:var(--oliv);flex:none}
+.pfeil{margin-left:auto;transition:transform .15s}
+.zu .pfeil{transform:rotate(-90deg)}
+.filter{display:flex;gap:6px;margin:0 0 14px;overflow-x:auto}
+.filter button{border:1px solid rgba(20,20,20,.3);background:transparent;border-radius:999px;padding:8px 14px;font-size:13px;white-space:nowrap}
+.filter button[aria-pressed=true]{background:var(--tinte);border-color:var(--tinte);color:var(--grund)}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translateX(-50%) translateY(16px);opacity:0;background:var(--tinte);color:var(--grund);padding:11px 16px;border-radius:999px;font-size:14px;transition:.2s;pointer-events:none;z-index:10;max-width:90vw;text-align:center}
+#toast.an{opacity:1;transform:translateX(-50%) translateY(0)}
+.einrichten p{font-size:15px;line-height:1.5;color:var(--grau)}
+.einrichten ol{padding-left:20px;font-size:14px;line-height:1.55;color:var(--grau)}
+.einrichten input{width:100%;border:1px solid var(--linie);background:#fff;border-radius:12px;padding:13px;font-size:16px;margin:4px 0 12px}
+.pin{font:300 34px/1 var(--mono);letter-spacing:.4em;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div><h1 id="titel">GTD</h1><p class="unterzeile" id="unterzeile"></p></div>
+  <button class="neu-laden" data-act="laden" aria-label="Neu laden"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg></button>
+</header>
+<main id="app"></main>
+<nav class="tabs" id="tabs" aria-label="Ansichten" hidden>
+  <a href="#eingang" data-tab="eingang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Eingang<i></i></a>
+  <a href="#heute" data-tab="heute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Heute<i></i></a>
+  <a href="#projekte" data-tab="projekte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>Projekte<i></i></a>
+  <a href="#gf" data-tab="gf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/></svg>GF<i></i></a>
+</nav>
+<div id="sheet"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ====================== Grundlagen ====================== */
+const ls = {
+  get(k, v) { try { const x = localStorage.getItem('gtd.' + k); return x === null ? v : JSON.parse(x); } catch (e) { return v; } },
+  set(k, v) { try { localStorage.setItem('gtd.' + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem('gtd.' + k); } catch (e) {} }
+};
+const S = {
+  repo: ls.get('repo', 'mary-jane1789/gtd'), token: ls.get('token', ''),
+  ansicht: 'eingang', d: null, laedt: false, fehler: null,
+  wichtigNurA: ls.get('wichtigNurA', false), zu: ls.get('zu', {}), filter: 'offen',
+  mz: null, mzFehler: null, offenQ: {}, entwurf: { frist: '', prio: '', projekt: '' }, sheet: null
+};
+const WT = ['So','Mo','Di','Mi','Do','Fr','Sa'], WT_LANG = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function tag(s) { if (!s) return null; const [y, m, d] = s.slice(0, 10).split('-').map(Number); return y ? new Date(y, m - 1, d) : null; }
+const plusT = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const kurz = d => `${WT[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`;
+const dm = d => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`;
+const heute = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+function wann(n, h) {
+  if (!n) return '';
+  const diff = Math.round((n - h) / 864e5);
+  if (diff < 0) return `überfällig seit ${dm(n)}`;
+  if (diff === 0) return 'heute';
+  if (diff === 1) return 'morgen';
+  return kurz(n);
+}
+const HAKEN = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+let toastT;
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('an'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('an'), 3000); }
+
+/* ====================== Zeilenformat (wie scripts/gtd.py) ====================== */
+const ZEILE = /^- \[( |x)\] (.*)$/;
+const FELD = /^([a-zäöüß_-]+):(.*)$/;
+function parse(z) {
+  const m = ZEILE.exec(z);
+  if (!m) return null;
+  const teile = m[2].trim().split(/ {2,}/);
+  let text = teile[0]; const felder = {};
+  for (const t of teile.slice(1)) {
+    const f = FELD.exec(t);
+    if (f) felder[f[1]] = f[2].trim(); else text += '  ' + t;
+  }
+  return { erledigt: m[1] === 'x', text, felder };
+}
+function baue(e) {
+  let z = `- [${e.erledigt ? 'x' : ' '}] ${e.text}`;
+  for (const [k, v] of Object.entries(e.felder)) if (v !== '' && v != null) z += `  ${k}:${v}`;
+  return z;
+}
+const einzeilig = s => String(s || '').replace(/\s+/g, ' ').trim();
+function plusRhythmus(d, r) {
+  const m = /^(\d+)([twmj])$/.exec(r || '');
+  if (!m) return null;
+  const n = +m[1], e = m[2];
+  if (e === 't') return plusT(d, n);
+  if (e === 'w') return plusT(d, 7 * n);
+  const mon = e === 'm' ? n : 12 * n;
+  const z = new Date(d.getFullYear(), d.getMonth() + mon, 1);
+  const letzter = new Date(z.getFullYear(), z.getMonth() + 1, 0).getDate();
+  return new Date(z.getFullYear(), z.getMonth(), Math.min(d.getDate(), letzter));
+}
+function naechst(e) {
+  const f = e.felder;
+  if (f.rhythmus) { const z = tag(f.zuletzt); return z ? plusRhythmus(z, f.rhythmus) : heute(); }
+  return tag(f['fällig']);
+}
+function inAbschnitt(text, abschnitt, zeilen) {
+  const L = text.replace(/\n+$/, '').split('\n');
+  let start = L.indexOf('## ' + abschnitt);
+  if (start < 0) { L.push('', '## ' + abschnitt, ''); start = L.length - 2; }
+  let ende = L.length;
+  for (let i = start + 1; i < L.length; i++) if (L[i].startsWith('## ')) { ende = i; break; }
+  while (ende > start + 1 && L[ende - 1].trim() === '') ende--;
+  if (ende === start + 1) zeilen = [''].concat(zeilen);
+  L.splice(ende, 0, ...zeilen);
+  return L.join('\n') + '\n';
+}
+function anDatei(text, zeilen) {
+  const t = text.replace(/\n+$/, '');
+  const letzte = t ? t.split('\n').pop() : '';
+  const trenner = (ZEILE.test(letzte) || !letzte.trim()) ? '\n' : '\n\n';
+  return t + trenner + zeilen.join('\n') + '\n';
+}
+function aufraeumen(L) {
+  const sauber = [];
+  L.forEach((z, i) => {
+    if (z.startsWith('## ')) {
+      const folgende = [];
+      for (const w of L.slice(i + 1)) { if (w.startsWith('## ')) break; folgende.push(w); }
+      if (!folgende.some(w => w.trim())) return;
+    }
+    sauber.push(z);
+  });
+  while (sauber.length > 1 && !sauber[sauber.length - 1].trim() && !sauber[sauber.length - 2].trim()) sauber.pop();
+  return sauber.join('\n').replace(/\n+$/, '') + '\n';
+}
+function insEingang(text, zeilen) {
+  // wie skills/todo-merken/scripts/eintragen.py
+  const h = iso(heute());
+  let t = text.replace(/\n+$/, '');
+  const ueber = t.split('\n').filter(l => l.startsWith('## '));
+  if (!ueber.length || ueber[ueber.length - 1].trim() !== '## ' + h) t += `\n\n## ${h}\n`;
+  return t + '\n' + zeilen.join('\n') + '\n';
+}
+function ersetzeZeile(text, roh, neu) {
+  const L = text.split('\n');
+  const i = L.indexOf(roh);
+  if (i < 0) throw new Konflikt();
+  if (neu === null) L.splice(i, 1); else L[i] = neu;
+  return L.join('\n');
+}
+class Konflikt extends Error { constructor() { super('Die Zeile hat sich inzwischen geändert. Ich habe neu geladen.'); } }
+
+/* ====================== GitHub ====================== */
+const API = 'https://api.github.com';
+const pfadUrl = p => p.split('/').map(encodeURIComponent).join('/');
+function b64decode(b) { const bin = atob(b.replace(/\s/g, '')); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }
+function b64encode(s) { const bytes = new TextEncoder().encode(s); let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); }
+async function gh(pfad, opt) {
+  const r = await fetch(API + pfad, Object.assign({ cache: 'no-store' }, opt, {
+    headers: Object.assign({ 'Authorization': 'Bearer ' + S.token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, (opt && opt.headers) || {})
+  }));
+  if (r.status === 401) { const e = new Error('Der GitHub-Schlüssel gilt nicht mehr.'); e.code = 401; throw e; }
+  return r;
+}
+async function holeDatei(p) {
+  const r = await gh(`/repos/${S.repo}/contents/${pfadUrl(p)}?ref=main`);
+  if (r.status === 404) return { text: '', sha: null };
+  if (!r.ok) throw new Error(`GitHub: ${r.status}`);
+  const j = await r.json();
+  return { text: b64decode(j.content || ''), sha: j.sha };
+}
+async function holeOrdner(p) {
+  const r = await gh(`/repos/${S.repo}/contents/${pfadUrl(p)}?ref=main`);
+  if (!r.ok) return [];
+  return (await r.json()).filter(x => x.type === 'file' && x.name.endsWith('.md')).map(x => x.path);
+}
+async function schreibeDatei(p, text, sha, nachricht) {
+  const body = { message: nachricht, content: b64encode(text), branch: 'main' };
+  if (sha) body.sha = sha;
+  const r = await gh(`/repos/${S.repo}/contents/${pfadUrl(p)}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+  if (r.status === 409 || r.status === 422) { const e = new Error('Konflikt'); e.code = 409; throw e; }
+  if (!r.ok) throw new Error(`GitHub: ${r.status}`);
+  return (await r.json()).content.sha;
+}
+// Frisch lesen, ändern, schreiben. Bei gleichzeitiger Änderung anderswo bis zu drei Versuche.
+async function aendereDatei(p, fn, nachricht) {
+  for (let versuch = 0; versuch < 3; versuch++) {
+    const { text, sha } = await holeDatei(p);
+    const neu = fn(text);
+    if (neu === text) return;
+    try { await schreibeDatei(p, neu, sha, nachricht); return; }
+    catch (e) { if (e.code !== 409) throw e; }
+  }
+  throw new Error('GitHub war gerade beschäftigt. Bitte noch einmal.');
+}
+
+/* ====================== Daten laden ====================== */
+async function laden(still) {
+  if (!S.token) return render();
+  S.laedt = true; if (!still) render();
+  try {
+    const projekte = await holeOrdner('projekte');
+    const pfade = ['_index.yaml', 'eingang.md', 'warten-auf.md'].concat(projekte);
+    const inhalte = await Promise.all(pfade.map(holeDatei));
+    const d = { aufgaben: [], projekte: [], stand: new Date() };
+    const idx = inhalte[0].text;
+    let akt = null;
+    for (const z of idx.split('\n')) {
+      let m = /^\s*-\s*kuerzel:\s*(\S+)/.exec(z);
+      if (m) { akt = { kuerzel: m[1], status: 'aktiv' }; d.projekte.push(akt); continue; }
+      m = /^\s+status:\s*(\S+)/.exec(z);
+      if (m && akt) akt.status = m[1];
+    }
+    for (const p of projekte) { const k = p.split('/').pop().replace(/\.md$/, ''); if (!d.projekte.some(x => x.kuerzel === k)) d.projekte.push({ kuerzel: k, status: 'ohne-index' }); }
+    pfade.slice(1).forEach((p, i) => {
+      inhalte[i + 1].text.split('\n').forEach((z, n) => {
+        const e = parse(z);
+        if (!e) return;
+        e.datei = p; e.zeile = n + 1; e.roh = z; e.id = p + ':' + (n + 1);
+        e.liste = p === 'eingang.md' ? 'eingang' : p === 'warten-auf.md' ? 'warten' : 'projekt';
+        e.projekt = e.liste === 'projekt' ? p.split('/').pop().replace(/\.md$/, '') : (e.felder.projekt && e.felder.projekt !== '?' ? e.felder.projekt : (e.liste === 'eingang' ? 'Eingang' : '_ohne-projekt'));
+        e.wiederkehrend = !!e.felder.rhythmus;
+        e.n = naechst(e);
+        e.t = e.felder.termin && e.felder.termin !== '-' ? tag(e.felder.termin) : null;
+        e.eff = (e.n && e.t) ? (e.n < e.t ? e.n : e.t) : (e.n || e.t);
+        e.prio = e.felder.prio || 'B';
+        d.aufgaben.push(e);
+      });
+    });
+    S.d = d; S.fehler = null;
+    ls.set('cache', { aufgaben: d.aufgaben.map(a => ({ datei: a.datei, roh: a.roh })), zeit: Date.now() });
+  } catch (e) {
+    S.fehler = e.code === 401 ? e.message : 'Keine Verbindung zu GitHub. Neue Einträge werden gemerkt und später gesendet.';
+    if (e.code === 401) { S.token = ''; ls.del('token'); }
+  }
+  S.laedt = false;
+  render();
+  warteschlangeSenden();
+}
+
+/* ====================== Eingang mit Warteschlange ====================== */
+function warteschlange() { return ls.get('warteschlange', []); }
+async function warteschlangeSenden() {
+  const q = warteschlange();
+  if (!q.length || !S.token || !navigator.onLine || S.sendet) return;
+  S.sendet = true;
+  try {
+    await aendereDatei('eingang.md', t => insEingang(t, q), `handy: ${q.length} neu im Eingang`);
+    ls.set('warteschlange', warteschlange().slice(q.length));
+    toast(q.length === 1 ? 'Im Eingang.' : `${q.length} Einträge im Eingang.`);
+    S.sendet = false;
+    await laden(true);
+  } catch (e) { S.sendet = false; render(); }
+}
+function erfassen() {
+  const ta = document.getElementById('neu-text');
+  const text = einzeilig(ta && ta.value);
+  if (!text) return;
+  const f = {};
+  if (S.entwurf.projekt) f.projekt = S.entwurf.projekt;
+  if (S.entwurf.frist) f['fällig'] = S.entwurf.frist;
+  if (S.entwurf.prio) f.prio = S.entwurf.prio;
+  f.quelle = 'handy'; f.erfasst = iso(heute());
+  ls.set('warteschlange', warteschlange().concat([baue({ erledigt: false, text, felder: f })]));
+  S.entwurf = { frist: '', prio: '', projekt: '' };
+  ta.value = '';
+  render();
+  document.getElementById('neu-text').focus();
+  warteschlangeSenden();
+}
+
+/* ====================== Aktionen ====================== */
+async function aktion(fn, erfolg) {
+  try { await fn(); if (erfolg) toast(erfolg); }
+  catch (e) { toast(e instanceof Konflikt ? e.message : (e.message || 'Fehler')); }
+  await laden(true);
+}
+const finde = id => S.d && S.d.aufgaben.find(a => a.id === id);
+function abhaken(a) {
+  const h = iso(heute());
+  return aktion(async () => {
+    const e = parse(a.roh);
+    if (e.felder.rhythmus) {
+      e.felder.zuletzt = h;
+      await aendereDatei(a.datei, t => ersetzeZeile(t, a.roh, baue(e)), `handy: ${e.text.slice(0, 50)} (wiederkehrend)`);
+      const monat = h.slice(0, 7), pfad = `archiv/${monat}.md`;
+      await aendereDatei(pfad, t => anDatei(t || `# Erledigt – ${monat}\n\n`, [`- [x] ${e.text} (wiederkehrend)  projekt:${a.projekt}  erledigt:${h}`]), `handy: Protokoll ${e.text.slice(0, 40)}`);
+    } else {
+      e.erledigt = true; e.felder.erledigt = h;
+      await aendereDatei(a.datei, t => ersetzeZeile(t, a.roh, baue(e)), `handy: erledigt ${e.text.slice(0, 50)}`);
+    }
+  }, a.wiederkehrend ? 'Erledigt, Rhythmus läuft neu.' : null);
+}
+function oeffnen(a) {
+  return aktion(() => { const e = parse(a.roh); e.erledigt = false; delete e.felder.erledigt; return aendereDatei(a.datei, t => ersetzeZeile(t, a.roh, baue(e)), `handy: wieder offen ${e.text.slice(0, 50)}`); });
+}
+async function speichern(a, werte) {
+  const e = parse(a.roh);
+  e.text = einzeilig(werte.text) || e.text;
+  for (const k of ['fällig', 'prio', 'notiz']) { const v = einzeilig(werte[k]); if (v) e.felder[k] = v; else delete e.felder[k]; }
+  const wer = einzeilig(werte.wer);
+  if (a.liste !== 'warten' && wer) {
+    // nach Warten auf verschieben: erst anlegen, dann entfernen (lieber doppelt als verloren)
+    e.felder.wer = wer; delete e.felder.liste;
+    if (a.liste === 'projekt' && a.projekt !== '_ohne-projekt') e.felder.projekt = a.projekt;
+    return aktion(async () => {
+      await aendereDatei('warten-auf.md', t => anDatei(t, [baue(e)]), `handy: warten auf ${wer}`);
+      await aendereDatei(a.datei, t => { const neu = ersetzeZeile(t, a.roh, null); return a.liste === 'eingang' ? aufraeumen(neu.split('\n')) : neu; }, `handy: nach Warten auf verschoben`);
+    }, `Wartet auf ${wer}.`);
+  }
+  if (a.liste === 'warten' && !wer) {
+    const proj = e.felder.projekt || '_ohne-projekt';
+    delete e.felder.projekt; delete e.felder.wer;
+    return aktion(async () => {
+      await aendereDatei(`projekte/${proj}.md`, t => inAbschnitt(t || `# ${proj}\n\n## Nächste Schritte\n`, 'Nächste Schritte', [baue(e)]), `handy: zurück in ${proj}`);
+      await aendereDatei('warten-auf.md', t => ersetzeZeile(t, a.roh, null), `handy: nicht mehr warten`);
+    }, `Zurück in ${proj}.`);
+  }
+  if (a.liste === 'warten') e.felder.wer = wer;
+  return aktion(() => aendereDatei(a.datei, t => ersetzeZeile(t, a.roh, baue(e)), `handy: geändert ${e.text.slice(0, 50)}`), 'Gespeichert.');
+}
+function loeschenEingang(a) {
+  return aktion(() => aendereDatei('eingang.md', t => aufraeumen(ersetzeZeile(t, a.roh, null).split('\n')), `handy: aus dem Eingang gelöscht`), 'Gelöscht.');
+}
+
+/* ====================== GF-Merkzettel ====================== */
+async function sha256(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('gtd-pin:' + s)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
+let mzTimer;
+function mzSperren() { S.mz = null; clearTimeout(mzTimer); if (S.ansicht === 'gf') render(); }
+async function mzEntsperren(pin) {
+  const h = await sha256(pin), gesp = ls.get('pin', null);
+  if (!gesp) ls.set('pin', h);
+  else if (gesp !== h) { toast('PIN falsch.'); return; }
+  await mzLaden();
+}
+async function mzLaden() {
+  try {
+    const { text } = await holeDatei('gf-merkzettel.md');
+    S.mz = text.split('\n').map((z, i) => { const e = parse(z); if (e) { e.roh = z; e.zeile = i + 1; } return e; }).filter(Boolean);
+  } catch (e) { toast('Merkzettel nicht erreichbar.'); return; }
+  clearTimeout(mzTimer); mzTimer = setTimeout(mzSperren, 5 * 60 * 1000);
+  render();
+}
+const MZ_KOPF = '# GF-Merkzettel – Freitag mit Human\n\nThemen für den regelmäßigen Freitagstermin mit Human.\n\n## Offen\n\n## Besprochen\n';
+async function mzAktion(fn, n) { try { await aendereDatei('gf-merkzettel.md', t => fn(t || MZ_KOPF), n); } catch (e) { toast(e.message || 'Fehler'); } await mzLaden(); }
+function mzNeu(text) {
+  text = einzeilig(text); if (!text) return;
+  if (S.mz && S.mz.some(p => !p.erledigt && p.text.toLowerCase() === text.toLowerCase())) { toast('Steht schon drauf.'); return; }
+  mzAktion(t => inAbschnitt(t, 'Offen', [baue({ erledigt: false, text, felder: { erfasst: iso(heute()), quelle: 'handy' } })]), 'handy: GF-Merkzettel');
+}
+function mzBesprochen(p) {
+  mzAktion(t => { const e = parse(p.roh); e.erledigt = true; e.felder.besprochen = iso(heute()); return inAbschnitt(ersetzeZeile(t, p.roh, null) + '\n', 'Besprochen', [baue(e)]); }, 'handy: GF-Merkzettel besprochen');
+}
+function mzOffen(p) {
+  mzAktion(t => { const e = parse(p.roh); e.erledigt = false; delete e.felder.besprochen; return inAbschnitt(ersetzeZeile(t, p.roh, null) + '\n', 'Offen', [baue(e)]); }, 'handy: GF-Merkzettel wieder offen');
+}
+
+/* ====================== Ansichten ====================== */
+function setKopf(t, u) { document.getElementById('titel').textContent = t; document.getElementById('unterzeile').textContent = u || ''; }
+function haken(a, an, act) {
+  return `<button class="haken${an ? ' an' : ''}" data-act="${act || (an ? 'oeffnen' : 'abhaken')}" data-id="${esc(a.id)}" aria-label="${an ? 'Wieder öffnen' : 'Abhaken'}: ${esc(a.text)}"><span>${HAKEN}</span></button>`;
+}
+function eintrag(a, h, zeigeProjekt) {
+  const bits = [];
+  if (zeigeProjekt !== false) bits.push(`<span>${esc(a.projekt)}</span>`);
+  if (a.liste === 'warten') bits.push(`<span>wartet · ${esc(a.felder.wer || '?')}</span>`);
+  if (a.wiederkehrend) bits.push(`<span>alle ${esc(a.felder.rhythmus)}</span>`);
+  if (a.n) bits.push(`<span class="${a.n < h && !a.erledigt ? 'rot' : ''}">${esc(wann(a.n, h))}</span>`);
+  if (a.felder.prio && zeigeProjekt === false) bits.push(`<span>${esc(a.felder.prio)}</span>`);
+  if (a.felder.notiz) bits.push(`<span>${esc(a.felder.notiz)}</span>`);
+  return `<div class="eintrag">${haken(a, a.erledigt)}<button class="inhalt" data-act="bearbeiten" data-id="${esc(a.id)}"><div class="t${a.erledigt ? ' erl' : ''}">${esc(a.text)}</div><div class="meta">${bits.join('')}</div></button></div>`;
+}
+function hinweisZeile() {
+  if (S.fehler) return `<p class="warte" style="color:var(--rot);margin:0 4px 12px">${esc(S.fehler)}</p>`;
+  return '';
+}
+function viewEinrichten() {
+  setKopf('GTD', 'Einrichten');
+  return `<div class="einrichten">
+    <p>Die App liest und schreibt dein privates Repo direkt bei GitHub. Dafür braucht sie einmal einen Schlüssel, der nur auf diesem Handy gespeichert wird.</p>
+    <ol>
+      <li>Auf github.com: Settings › Developer settings › Fine-grained tokens › Generate new token.</li>
+      <li>Repository access: Only select repositories › <b>gtd</b>.</li>
+      <li>Permissions › Contents: <b>Read and write</b>. Sonst nichts.</li>
+      <li>Ablaufdatum nach Wunsch, dann den Schlüssel hier einfügen.</li>
+    </ol>
+    <label class="mono" style="font-size:11px;color:var(--grau)">REPOSITORY</label>
+    <input id="e-repo" value="${esc(S.repo)}" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label class="mono" style="font-size:11px;color:var(--grau)">SCHLÜSSEL</label>
+    <input id="e-token" type="password" placeholder="github_pat_…" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="knoepfe"><button class="knopf" data-act="verbinden">Verbinden</button></div>
+    ${S.fehler ? `<p class="rot" style="font-size:14px">${esc(S.fehler)}</p>` : ''}
+  </div>`;
+}
+function viewEingang(h) {
+  setKopf('Eingang', 'Schnell merken, später einsortieren');
+  const q = warteschlange();
+  const E = S.entwurf;
+  const projekte = (S.d ? S.d.projekte : []).filter(p => p.status !== 'abgeschlossen').map(p => p.kuerzel);
+  const chip = (an, label, inner) => `<span class="chip${an ? ' an' : ''}">${label}${inner}</span>`;
+  const optionen = `<div class="optionen">
+      ${chip(E.frist, E.frist ? 'Frist ' + esc(dm(tag(E.frist))) : 'Frist', `<input type="date" data-entwurf="frist" value="${esc(E.frist)}" aria-label="Frist">`)}
+      ${chip(E.prio, E.prio ? 'Prio ' + esc(E.prio) : 'Prio', `<select data-entwurf="prio" aria-label="Priorität"><option value="">–</option><option${E.prio === 'A' ? ' selected' : ''}>A</option><option${E.prio === 'B' ? ' selected' : ''}>B</option><option${E.prio === 'C' ? ' selected' : ''}>C</option></select>`)}
+      ${chip(E.projekt, E.projekt ? esc(E.projekt.split('_')[0]) : 'Projekt', `<select data-entwurf="projekt" aria-label="Projekt"><option value="">–</option>${projekte.map(p => `<option${E.projekt === p ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select>`)}
+      <button class="senden" data-act="erfassen">Merken</button>
+    </div>`;
+  const imEingang = S.d ? S.d.aufgaben.filter(a => a.liste === 'eingang' && !a.erledigt) : [];
+  const wartend = q.map(z => { const e = parse(z) || { text: z, felder: {} }; return `<div class="eintrag"><span class="haken" aria-hidden="true"><span style="border-style:dashed"></span></span><div class="inhalt"><div class="t">${esc(e.text)}</div><div class="meta"><span style="color:var(--oliv)">wird gesendet …</span></div></div></div>`; }).join('');
+  return `${hinweisZeile()}<div class="erfassen"><textarea id="neu-text" rows="2" placeholder="Was willst du dir merken?" enterkeyhint="send" aria-label="Neues To-do"></textarea>${optionen}</div>
+    <div class="karte"><div class="kopf"><h2>Im Eingang</h2><span class="pille" style="background:var(--blau-hell)">${imEingang.length + q.length}</span></div>
+      ${wartend}${imEingang.slice().reverse().map(a => eintrag(a, h)).join('') || (q.length ? '' : '<p class="leer">Leer. Was du hier merkst, sortiert todo-einsortieren später ein.</p>')}
+    </div>`;
+}
+const QUAD = { 1: ['Jetzt', 'dringend · wichtig', 'var(--gelb)'], 2: ['Planen', 'wichtig', 'var(--gelb-hell)'], 3: ['Kurz erledigen', 'dringend', 'var(--blau-hell)'], 4: ['Später', 'weder noch', 'var(--beige)'] };
+function einordnen(h) {
+  const morgen = plusT(h, 1), ende = plusT(h, 7), heuteIso = iso(h);
+  const q = { 1: [], 2: [], 3: [], 4: [], w: [] };
+  for (const a of S.d.aufgaben) {
+    if (a.erledigt && a.felder.erledigt !== heuteIso) continue;
+    if (a.liste === 'warten') { if (!a.erledigt) q.w.push(a); continue; }
+    const wichtig = S.wichtigNurA ? a.prio === 'A' : (a.prio === 'A' || a.prio === 'B');
+    const e = a.eff;
+    if (e && e <= morgen) q[wichtig ? 1 : 3].push(a);
+    else if (e && e <= ende) q[wichtig ? 2 : 4].push(a);
+    else if (!e && a.prio === 'A' && !a.wiederkehrend) q[2].push(a);
+  }
+  const s = (x, y) => (x.erledigt - y.erledigt) || ((x.eff || 9e15) - (y.eff || 9e15)) || x.prio.localeCompare(y.prio);
+  for (const k in q) q[k].sort(s);
+  return q;
+}
+function viewHeute(h) {
+  setKopf('Heute', `${WT_LANG[h.getDay()]} ${dm(h)}`);
+  if (!S.d) return hinweisZeile() + '<p class="leer">Lade …</p>';
+  const q = einordnen(h);
+  const karten = [1, 2, 3, 4].map(i => {
+    const L = q[i], max = S.offenQ[i] ? 999 : 6;
+    const mehr = L.length > 6 ? `<button class="mehr" data-act="mehrQ" data-q="${i}">${S.offenQ[i] ? 'weniger' : '+ ' + (L.length - 6) + ' weitere'}</button>` : '';
+    return `<div class="karte"><div class="kopf"><h2>${QUAD[i][0]}</h2><span class="pille" style="background:${QUAD[i][2]}">${QUAD[i][1]} · ${L.filter(a => !a.erledigt).length}</span></div>${L.slice(0, max).map(a => eintrag(a, h)).join('') || '<p class="leer">nichts</p>'}${mehr}</div>`;
+  }).join('');
+  const morgen = plusT(h, 1);
+  const warten = q.w.map(a => { const nach = a.n && a.n <= morgen; return `<div class="eintrag"><span style="width:34px;flex:none"></span><button class="inhalt" data-act="bearbeiten" data-id="${esc(a.id)}"><div class="t">${esc(a.text)}</div><div class="meta"><span style="color:var(--tinte)">${esc(a.felder.wer || '?')}</span><span>${esc(a.projekt)}</span>${a.n ? `<span class="${nach ? 'rot' : ''}">${esc(wann(a.n, h))}${nach ? ' · nachfassen' : ''}</span>` : ''}</div></button></div>`; }).join('');
+  return `${hinweisZeile()}<div style="display:flex;justify-content:flex-end;gap:6px;margin:0 0 12px;font:400 11px/1 var(--mono);color:var(--grau);align-items:center">wichtig =
+      <button class="chip${S.wichtigNurA ? '' : ' an'}" data-act="wichtig" data-v="AB">A + B</button><button class="chip${S.wichtigNurA ? ' an' : ''}" data-act="wichtig" data-v="A">nur A</button></div>
+    ${karten}<div class="karte"><div class="kopf"><h2>Warten auf</h2><span class="pille" style="background:var(--blau-hell)">${q.w.length}</span></div>${warten || '<p class="leer">nichts</p>'}</div>`;
+}
+function viewProjekte(h) {
+  if (!S.d) { setKopf('Projekte'); return hinweisZeile() + '<p class="leer">Lade …</p>'; }
+  const offen = S.d.aufgaben.filter(a => !a.erledigt && a.liste !== 'eingang');
+  setKopf('Projekte', `${offen.length} offen`);
+  const passt = a => S.filter === 'alle' ? true : S.filter === 'offen' ? !a.erledigt && a.liste !== 'warten' : S.filter === 'wartet' ? !a.erledigt && a.liste === 'warten' : a.erledigt;
+  const sort = (x, y) => (x.erledigt - y.erledigt) || ((x.liste === 'warten') - (y.liste === 'warten')) || (x.wiederkehrend - y.wiederkehrend) || ((x.eff || 9e15) - (y.eff || 9e15)) || x.prio.localeCompare(y.prio);
+  const gruppen = S.d.projekte.filter(p => p.status !== 'abgeschlossen').map(p => {
+    const alle = S.d.aufgaben.filter(a => a.liste !== 'eingang' && a.projekt === p.kuerzel);
+    const L = alle.filter(passt).sort(sort);
+    const ohne = p.status === 'aktiv' && !p.kuerzel.startsWith('_') && !alle.some(a => !a.erledigt && a.liste === 'projekt' && !a.wiederkehrend);
+    if (!L.length && !ohne) return '';
+    const zu = S.zu[p.kuerzel] ?? true;
+    const n = alle.filter(a => !a.erledigt && a.liste !== 'warten').length, w = alle.filter(a => !a.erledigt && a.liste === 'warten').length;
+    return `<section class="karte${zu ? ' zu' : ''}"><button class="gruppe-kopf" data-act="gruppe" data-p="${esc(p.kuerzel)}" aria-expanded="${!zu}"><span class="punkt"></span><span style="min-width:0"><h2 style="font-size:18px;overflow-wrap:anywhere">${esc(p.kuerzel)}</h2><span class="meta" style="margin-top:4px"><span>${n} offen${w ? ' · ' + w + ' wartet' : ''}</span>${ohne ? '<span class="pille" style="background:var(--gelb);padding:3px 7px">kein nächster Schritt</span>' : ''}</span></span><svg class="pfeil" width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="#141414" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      ${zu ? '' : (L.map(a => eintrag(a, h, false)).join('') || '<p class="leer">nichts in dieser Auswahl</p>')}</section>`;
+  }).join('');
+  const knoepfe = ['offen', 'wartet', 'erledigt', 'alle'].map(f => `<button data-act="filter" data-f="${f}" aria-pressed="${S.filter === f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('');
+  return `${hinweisZeile()}<div class="filter">${knoepfe}</div>${gruppen}`;
+}
+function viewGF() {
+  setKopf('GF', 'Freitag mit Human');
+  if (!S.mz) {
+    const neu = !ls.get('pin', null);
+    return `<div class="karte" style="padding:28px 20px;text-align:center"><h2>Vertraulich</h2>
+      <p style="font-size:14px;line-height:1.5;color:var(--grau);margin:12px 0 18px">${neu ? 'Lege eine PIN fest. Sie gilt nur auf diesem Handy.' : 'PIN eingeben. Die Punkte werden erst dann geladen und nach fünf Minuten wieder ausgeblendet.'}</p>
+      <input id="pin" class="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" style="width:180px;border:1px solid var(--linie);border-radius:14px;padding:12px;background:#fff" aria-label="PIN">
+      <div class="knoepfe" style="justify-content:center"><button class="knopf" style="flex:0 0 auto;padding:13px 28px" data-act="pin">${neu ? 'PIN festlegen' : 'Öffnen'}</button></div></div>`;
+  }
+  const offen = S.mz.filter(p => !p.erledigt), bespr = S.mz.filter(p => p.erledigt).slice(-6).reverse();
+  const z = (p, an) => `<div class="eintrag"><button class="haken${an ? ' an' : ''}" data-act="${an ? 'mzOffen' : 'mzBesprochen'}" data-z="${p.zeile}" aria-label="${an ? 'wieder offen' : 'besprochen'}"><span>${HAKEN}</span></button><div class="inhalt"><div class="t"${an ? ' style="color:#555"' : ''}>${esc(p.text)}</div><div class="meta">${p.felder.notiz ? `<span>${esc(p.felder.notiz)}</span>` : ''}${p.felder.erfasst ? `<span>erfasst ${esc(dm(tag(p.felder.erfasst)))}</span>` : ''}</div></div></div>`;
+  return `<div class="erfassen" style="display:flex;gap:8px;align-items:center;padding:8px 8px 8px 14px"><input id="mz-neu" placeholder="Neuer Punkt für Freitag …" enterkeyhint="done" style="flex:1;min-width:0;border:0;font-size:17px;background:transparent;outline:none" aria-label="Neuer Punkt"><button class="senden" data-act="mzNeu">Merken</button></div>
+    <div class="karte"><div class="kopf"><h2>Offen</h2><span class="pille" style="background:var(--gelb)">${offen.length}</span></div>${offen.map(p => z(p, false)).join('') || '<p class="leer">Nichts offen.</p>'}</div>
+    ${bespr.length ? `<div class="karte"><div class="kopf"><h2>Zuletzt besprochen</h2></div>${bespr.map(p => z(p, true)).join('')}</div>` : ''}
+    <div class="knoepfe"><button class="knopf hell" data-act="mzSperren">Sperren</button></div>`;
+}
+function render() {
+  const app = document.getElementById('app'), tabs = document.getElementById('tabs');
+  const h = heute();
+  if (!S.token) { tabs.hidden = true; app.innerHTML = viewEinrichten(); return; }
+  tabs.hidden = false;
+  tabs.querySelectorAll('a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === S.ansicht ? 'page' : 'false'));
+  const fokus = document.activeElement && document.activeElement.id;
+  const wert = fokus === 'neu-text' || fokus === 'mz-neu' ? document.activeElement.value : null;
+  app.innerHTML = S.ansicht === 'eingang' ? viewEingang(h) : S.ansicht === 'heute' ? viewHeute(h) : S.ansicht === 'projekte' ? viewProjekte(h) : viewGF();
+  if (fokus) { const el = document.getElementById(fokus); if (el) { if (wert !== null) el.value = wert; el.focus(); } }
+  renderSheet();
+}
+
+/* ====================== Bearbeiten-Blatt ====================== */
+function renderSheet() {
+  const box = document.getElementById('sheet');
+  const a = S.sheet && finde(S.sheet);
+  if (!a) { box.innerHTML = ''; return; }
+  if (box.dataset.offen === a.id) return;
+  box.dataset.offen = a.id;
+  const f = a.felder, prio = f.prio || '';
+  box.innerHTML = `<div class="schleier" data-act="schliessen"></div><div class="sheet" role="dialog" aria-label="Aufgabe bearbeiten">
+    <div class="meta" style="margin:0 0 4px"><span>${esc(a.projekt)}</span>${f.quelle ? `<span>${esc(f.quelle.split('/')[0])}</span>` : ''}${f.erfasst ? `<span>erfasst ${esc(dm(tag(f.erfasst)))}</span>` : ''}</div>
+    <label for="s-text">Aufgabe</label><textarea id="s-text">${esc(a.text)}</textarea>
+    ${a.wiederkehrend ? `<label>Rhythmus</label><p style="margin:0;font:400 13px var(--mono)">alle ${esc(f.rhythmus)} · nächstes Mal ${esc(a.n ? dm(a.n) : '')}</p>` : `<label for="s-frist">Frist</label><input type="date" id="s-frist" value="${esc(f['fällig'] || '')}">`}
+    <label>Prio</label><div class="seg" id="s-prio">${['A', 'B', 'C', ''].map(p => `<button type="button" data-prio="${p}" aria-pressed="${p === prio}">${p || '–'}</button>`).join('')}</div>
+    <label for="s-notiz">Notiz</label><input type="text" id="s-notiz" value="${esc(f.notiz || '')}">
+    <label for="s-wer">Warten auf</label><input type="text" id="s-wer" value="${esc(f.wer || '')}" placeholder="Name, wenn du auf jemanden wartest">
+    <div class="knoepfe"><button class="knopf hell" data-act="schliessen">Abbrechen</button><button class="knopf" data-act="sichern">Speichern</button></div>
+    ${a.liste === 'eingang' ? '<div class="knoepfe"><button class="knopf rot" data-act="loeschen">Aus dem Eingang löschen</button></div>' : ''}
+  </div>`;
+}
+function sheetSchliessen() { S.sheet = null; const box = document.getElementById('sheet'); box.innerHTML = ''; delete box.dataset.offen; }
+
+/* ====================== Ereignisse ====================== */
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act], [data-prio]');
+  if (!b) return;
+  if (b.dataset.prio !== undefined) { b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); return; }
+  const act = b.dataset.act, a = b.dataset.id ? finde(b.dataset.id) : null;
+  if (act === 'laden') { laden(); if (S.mz) mzLaden(); }
+  else if (act === 'verbinden') {
+    S.repo = document.getElementById('e-repo').value.trim(); S.token = document.getElementById('e-token').value.trim();
+    try { const r = await gh(`/repos/${S.repo}`); if (!r.ok) throw new Error(r.status === 404 ? 'Repository nicht gefunden oder der Schlüssel hat keinen Zugriff darauf.' : 'GitHub: ' + r.status); ls.set('repo', S.repo); ls.set('token', S.token); S.fehler = null; location.hash = '#eingang'; laden(); }
+    catch (x) { S.token = ''; S.fehler = x.message; render(); }
+  }
+  else if (act === 'erfassen') erfassen();
+  else if (act === 'abhaken' && a) abhaken(a);
+  else if (act === 'oeffnen' && a) oeffnen(a);
+  else if (act === 'bearbeiten' && a) { S.sheet = a.id; renderSheet(); }
+  else if (act === 'schliessen') sheetSchliessen();
+  else if (act === 'sichern') {
+    const x = finde(S.sheet); if (!x) return sheetSchliessen();
+    const prioBtn = document.querySelector('#s-prio [aria-pressed=true]');
+    const werte = { text: document.getElementById('s-text').value, 'fällig': (document.getElementById('s-frist') || { value: x.felder['fällig'] || '' }).value, prio: prioBtn ? prioBtn.dataset.prio : '', notiz: document.getElementById('s-notiz').value, wer: document.getElementById('s-wer').value };
+    sheetSchliessen(); speichern(x, werte);
+  }
+  else if (act === 'loeschen') { const x = finde(S.sheet); sheetSchliessen(); if (x && confirm('Aus dem Eingang löschen?')) loeschenEingang(x); }
+  else if (act === 'mehrQ') { S.offenQ[b.dataset.q] = !S.offenQ[b.dataset.q]; render(); }
+  else if (act === 'wichtig') { S.wichtigNurA = b.dataset.v === 'A'; ls.set('wichtigNurA', S.wichtigNurA); render(); }
+  else if (act === 'filter') { S.filter = b.dataset.f; render(); }
+  else if (act === 'gruppe') { const p = b.dataset.p; S.zu[p] = !(S.zu[p] ?? true); ls.set('zu', S.zu); render(); }
+  else if (act === 'pin') { const v = document.getElementById('pin').value.trim(); if (v.length < 4) return toast('Mindestens 4 Ziffern.'); mzEntsperren(v); }
+  else if (act === 'mzNeu') { const el = document.getElementById('mz-neu'); mzNeu(el.value); el.value = ''; }
+  else if (act === 'mzBesprochen' || act === 'mzOffen') { const p = S.mz && S.mz.find(x => String(x.zeile) === b.dataset.z); if (p) (act === 'mzBesprochen' ? mzBesprochen : mzOffen)(p); }
+  else if (act === 'mzSperren') mzSperren();
+});
+document.addEventListener('change', e => {
+  const k = e.target.dataset && e.target.dataset.entwurf;
+  if (k) { S.entwurf[k] = e.target.value; render(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.target.id === 'neu-text' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); erfassen(); }
+  if (e.target.id === 'mz-neu' && e.key === 'Enter') { mzNeu(e.target.value); e.target.value = ''; }
+  if (e.target.id === 'pin' && e.key === 'Enter') document.querySelector('[data-act=pin]').click();
+});
+function route() {
+  const v = location.hash.slice(1) || 'eingang';
+  S.ansicht = ['eingang', 'heute', 'projekte', 'gf'].includes(v) ? v : 'eingang';
+  if (S.ansicht !== 'gf') S.mz = null;
+  sheetSchliessen();
+  render(); window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('online', () => { warteschlangeSenden(); laden(true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { if (S.mz) mzSperren(); } else if (S.token) laden(true); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+route();
+laden();
+</script>
+</body>
+</html>
