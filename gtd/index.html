@@ -88,7 +88,10 @@ nav.tabs svg{width:24px;height:24px}
 .einrichten p{font-size:15px;line-height:1.5;color:var(--grau)}
 .einrichten ol{padding-left:20px;font-size:14px;line-height:1.55;color:var(--grau)}
 .einrichten input{width:100%;border:1px solid var(--linie);background:#fff;border-radius:12px;padding:13px;font-size:16px;margin:4px 0 12px}
-.pin{font:300 34px/1 var(--mono);letter-spacing:.4em;text-align:center}
+.neu-projekt{display:flex;gap:8px;align-items:center;padding:10px 0 8px;border-top:1px solid var(--linie)}
+.neu-projekt input{flex:1;min-width:0;border:1px solid var(--linie);background:var(--grund);border-radius:999px;padding:10px 14px;font-size:16px;outline:none}
+.neu-projekt input:focus{border-color:var(--oliv)}
+.neu-projekt .senden{margin-left:0;padding:10px 16px;font-size:14px}
 </style>
 </head>
 <body>
@@ -393,27 +396,27 @@ async function speichern(a, werte) {
   if (a.liste === 'warten') e.felder.wer = wer;
   return aktion(() => aendereDatei(a.datei, t => ersetzeZeile(t, a.roh, baue(e)), `handy: geändert ${e.text.slice(0, 50)}`), 'Gespeichert.');
 }
+function projektNeu(kuerzel, text) {
+  text = einzeilig(text);
+  if (!text || !kuerzel) return;
+  const zeile = baue({ erledigt: false, text, felder: { quelle: 'handy', erfasst: iso(heute()) } });
+  const kopf = `---\nprojekt: ${kuerzel}\n---\n# ${kuerzel}\n\nZiel: (offen)\n\n## Nächste Schritte\n`;
+  return aktion(() => aendereDatei(`projekte/${kuerzel}.md`, t => inAbschnitt(t || kopf, 'Nächste Schritte', [zeile]), `handy: neu in ${kuerzel}`), `In ${kuerzel}.`);
+}
 function loeschenEingang(a) {
   return aktion(() => aendereDatei('eingang.md', t => aufraeumen(ersetzeZeile(t, a.roh, null).split('\n')), `handy: aus dem Eingang gelöscht`), 'Gelöscht.');
 }
 
 /* ====================== GF-Merkzettel ====================== */
-async function sha256(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('gtd-pin:' + s)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
-let mzTimer;
-function mzSperren() { S.mz = null; clearTimeout(mzTimer); if (S.ansicht === 'gf') render(); }
-async function mzEntsperren(pin) {
-  const h = await sha256(pin), gesp = ls.get('pin', null);
-  if (!gesp) ls.set('pin', h);
-  else if (gesp !== h) { toast('PIN falsch.'); return; }
-  await mzLaden();
-}
+// Keine eigene Sperre mehr: geladen wird, sobald der Tab geöffnet wird. Alte PIN aufräumen.
+ls.del('pin');
 async function mzLaden() {
+  if (!S.token) return;
   try {
     const { text } = await holeDatei('gf-merkzettel.md');
     S.mz = text.split('\n').map((z, i) => { const e = parse(z); if (e) { e.roh = z; e.zeile = i + 1; } return e; }).filter(Boolean);
   } catch (e) { toast('Merkzettel nicht erreichbar.'); return; }
-  clearTimeout(mzTimer); mzTimer = setTimeout(mzSperren, 5 * 60 * 1000);
-  render();
+  if (S.ansicht === 'gf') render();
 }
 const MZ_KOPF = '# GF-Merkzettel – Freitag mit Human\n\nThemen für den regelmäßigen Freitagstermin mit Human.\n\n## Offen\n\n## Besprochen\n';
 async function mzAktion(fn, n) { try { await aendereDatei('gf-merkzettel.md', t => fn(t || MZ_KOPF), n); } catch (e) { toast(e.message || 'Fehler'); } await mzLaden(); }
@@ -531,26 +534,19 @@ function viewProjekte(h) {
     const zu = S.zu[p.kuerzel] ?? true;
     const n = alle.filter(a => !a.erledigt && a.liste !== 'warten').length, w = alle.filter(a => !a.erledigt && a.liste === 'warten').length;
     return `<section class="karte${zu ? ' zu' : ''}"><button class="gruppe-kopf" data-act="gruppe" data-p="${esc(p.kuerzel)}" aria-expanded="${!zu}"><span class="punkt"></span><span style="min-width:0"><h2 style="font-size:18px;overflow-wrap:anywhere">${esc(p.kuerzel)}</h2><span class="meta" style="margin-top:4px"><span>${n} offen${w ? ' · ' + w + ' wartet' : ''}</span>${ohne ? '<span class="pille" style="background:var(--gelb);padding:3px 7px">kein nächster Schritt</span>' : ''}</span></span><svg class="pfeil" width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="#141414" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-      ${zu ? '' : (L.map(a => eintrag(a, h, false)).join('') || '<p class="leer">nichts in dieser Auswahl</p>')}</section>`;
+      ${zu ? '' : (L.map(a => eintrag(a, h, false)).join('') || '<p class="leer">nichts in dieser Auswahl</p>') + `<div class="neu-projekt"><input data-neu-projekt="${esc(p.kuerzel)}" placeholder="Neues To-do …" enterkeyhint="done" aria-label="Neues To-do für ${esc(p.kuerzel)}"><button class="senden" data-act="projektNeu" data-p="${esc(p.kuerzel)}">Hinzufügen</button></div>`}</section>`;
   }).join('');
   const knoepfe = ['offen', 'wartet', 'erledigt', 'alle'].map(f => `<button data-act="filter" data-f="${f}" aria-pressed="${S.filter === f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('');
   return `${hinweisZeile()}<div class="filter">${knoepfe}</div>${gruppen}`;
 }
 function viewGF() {
   setKopf('GF', 'Freitag mit Human');
-  if (!S.mz) {
-    const neu = !ls.get('pin', null);
-    return `<div class="karte" style="padding:28px 20px;text-align:center"><h2>Vertraulich</h2>
-      <p style="font-size:14px;line-height:1.5;color:var(--grau);margin:12px 0 18px">${neu ? 'Lege eine PIN fest. Sie gilt nur auf diesem Handy.' : 'PIN eingeben. Die Punkte werden erst dann geladen und nach fünf Minuten wieder ausgeblendet.'}</p>
-      <input id="pin" class="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" style="width:180px;border:1px solid var(--linie);border-radius:14px;padding:12px;background:#fff" aria-label="PIN">
-      <div class="knoepfe" style="justify-content:center"><button class="knopf" style="flex:0 0 auto;padding:13px 28px" data-act="pin">${neu ? 'PIN festlegen' : 'Öffnen'}</button></div></div>`;
-  }
+  if (!S.mz) return hinweisZeile() + '<p class="leer">Lade …</p>';
   const offen = S.mz.filter(p => !p.erledigt), bespr = S.mz.filter(p => p.erledigt).slice(-6).reverse();
   const z = (p, an) => `<div class="eintrag"><button class="haken${an ? ' an' : ''}" data-act="${an ? 'mzOffen' : 'mzBesprochen'}" data-z="${p.zeile}" aria-label="${an ? 'wieder offen' : 'besprochen'}"><span>${HAKEN}</span></button><div class="inhalt"><div class="t"${an ? ' style="color:#555"' : ''}>${esc(p.text)}</div><div class="meta">${p.felder.notiz ? `<span>${esc(p.felder.notiz)}</span>` : ''}${p.felder.erfasst ? `<span>erfasst ${esc(dm(tag(p.felder.erfasst)))}</span>` : ''}</div></div></div>`;
   return `<div class="erfassen" style="display:flex;gap:8px;align-items:center;padding:8px 8px 8px 14px"><input id="mz-neu" placeholder="Neuer Punkt für Freitag …" enterkeyhint="done" style="flex:1;min-width:0;border:0;font-size:17px;background:transparent;outline:none" aria-label="Neuer Punkt"><button class="senden" data-act="mzNeu">Merken</button></div>
     <div class="karte"><div class="kopf"><h2>Offen</h2><span class="pille" style="background:var(--gelb)">${offen.length}</span></div>${offen.map(p => z(p, false)).join('') || '<p class="leer">Nichts offen.</p>'}</div>
-    ${bespr.length ? `<div class="karte"><div class="kopf"><h2>Zuletzt besprochen</h2></div>${bespr.map(p => z(p, true)).join('')}</div>` : ''}
-    <div class="knoepfe"><button class="knopf hell" data-act="mzSperren">Sperren</button></div>`;
+    ${bespr.length ? `<div class="karte"><div class="kopf"><h2>Zuletzt besprochen</h2></div>${bespr.map(p => z(p, true)).join('')}</div>` : ''}`;
 }
 function render() {
   const app = document.getElementById('app'), tabs = document.getElementById('tabs');
@@ -614,10 +610,9 @@ document.addEventListener('click', async e => {
   else if (act === 'wichtig') { S.wichtigNurA = b.dataset.v === 'A'; ls.set('wichtigNurA', S.wichtigNurA); render(); }
   else if (act === 'filter') { S.filter = b.dataset.f; render(); }
   else if (act === 'gruppe') { const p = b.dataset.p; S.zu[p] = !(S.zu[p] ?? true); ls.set('zu', S.zu); render(); }
-  else if (act === 'pin') { const v = document.getElementById('pin').value.trim(); if (v.length < 4) return toast('Mindestens 4 Ziffern.'); mzEntsperren(v); }
   else if (act === 'mzNeu') { const el = document.getElementById('mz-neu'); mzNeu(el.value); el.value = ''; }
   else if (act === 'mzBesprochen' || act === 'mzOffen') { const p = S.mz && S.mz.find(x => String(x.zeile) === b.dataset.z); if (p) (act === 'mzBesprochen' ? mzBesprochen : mzOffen)(p); }
-  else if (act === 'mzSperren') mzSperren();
+  else if (act === 'projektNeu') { const el = b.parentElement.querySelector('input'); projektNeu(b.dataset.p, el.value); }
 });
 document.addEventListener('change', e => {
   const k = e.target.dataset && e.target.dataset.entwurf;
@@ -626,18 +621,19 @@ document.addEventListener('change', e => {
 document.addEventListener('keydown', e => {
   if (e.target.id === 'neu-text' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); erfassen(); }
   if (e.target.id === 'mz-neu' && e.key === 'Enter') { mzNeu(e.target.value); e.target.value = ''; }
-  if (e.target.id === 'pin' && e.key === 'Enter') document.querySelector('[data-act=pin]').click();
+  if (e.target.dataset && e.target.dataset.neuProjekt && e.key === 'Enter') { e.preventDefault(); projektNeu(e.target.dataset.neuProjekt, e.target.value); }
 });
 function route() {
   const v = location.hash.slice(1) || 'eingang';
   S.ansicht = ['eingang', 'heute', 'projekte', 'gf'].includes(v) ? v : 'eingang';
   if (S.ansicht !== 'gf') S.mz = null;
+  else if (!S.mz) mzLaden();
   sheetSchliessen();
   render(); window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
 window.addEventListener('online', () => { warteschlangeSenden(); laden(true); });
-document.addEventListener('visibilitychange', () => { if (document.hidden) { if (S.mz) mzSperren(); } else if (S.token) laden(true); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.token) { laden(true); if (S.ansicht === 'gf') mzLaden(); } });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 route();
 laden();
